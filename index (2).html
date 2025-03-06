@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortgage Rate Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" />
+    <style>
+        /* Base Transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        /* Professional Theme */
+        :root {
+            --primary-bg: #f9fafb;
+            --secondary-bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --primary-text: #1f2937;
+            --secondary-text: #4b5563;
+            --accent-color: #0ea5e9;
+            --accent-hover: #0284c7;
+            --border-color: #e5e7eb;
+            --input-bg: #f9fafb;
+            --chart-grid: rgba(14, 165, 233, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.05);
+            --card-shadow: 0 4px 6px -1px var(--shadow-color);
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        /* Zen Theme */
+        .theme-zen {
+            --primary-bg: #f8fafc;
+            --secondary-bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --primary-text: #334155;
+            --secondary-text: #64748b;
+            --accent-color: #84cc16;
+            --accent-hover: #65a30d;
+            --border-color: #e2e8f0;
+            --input-bg: #f8fafc;
+            --chart-grid: rgba(132, 204, 22, 0.1);
+            --shadow-color: rgba(132, 204, 22, 0.05);
+            --card-shadow: 0 4px 6px -1px var(--shadow-color);
+            --font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        /* Galactic Theme */
+        .theme-galactic {
+            --primary-bg: #0f172a;
+            --secondary-bg: #1e293b;
+            --card-bg: #1e293b;
+            --primary-text: #f8fafc;
+            --secondary-text: #94a3b8;
+            --accent-color: #8b5cf6;
+            --accent-hover: #7c3aed;
+            --border-color: #334155;
+            --input-bg: #334155;
+            --chart-grid: rgba(139, 92, 246, 0.2);
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --card-shadow: 0 4px 6px -1px var(--shadow-color);
+            --font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        /* Apply Theme Variables */
+        body {
+            background-color: var(--primary-bg);
+            color: var(--primary-text);
+            font-family: var(--font-family);
+            line-height: 1.5;
+        }
+        
+        .theme-card {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+            box-shadow: var(--card-shadow);
+        }
+        
+        .theme-section {
+            background-color: var(--secondary-bg);
+        }
+        
+        .theme-input {
+            background-color: var(--input-bg);
+            border-color: var(--border-color);
+            color: var(--primary-text);
+        }
+        
+        .theme-button {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .theme-button:hover {
+            background-color: var(--accent-hover);
+        }
+        
+        .theme-table th {
+            background-color: var(--secondary-bg);
+            color: var(--primary-text);
+        }
+        
+        .theme-table td {
+            border-color: var(--border-color);
+            color: var(--primary-text);
+        }
+        
+        /* Tab Styling */
+        .tab {
+            color: var(--secondary-text);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab:hover {
+            color: var(--accent-color);
+        }
+        
+        .tab.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+        
+        /* Theme Button Styling */
+        .theme-selector {
+            color: var(--primary-text);
+            border: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+        }
+        
+        .theme-selector:hover {
+            border-color: var(--accent-color);
+        }
+        
+        .theme-selector.active {
+            background-color: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="border-b border-gray-200 sticky top-0 z-50 bg-opacity-95" style="background-color: var(--card-bg);">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center">
+                    <i class="fas fa-landmark text-xl mr-2" style="color: var(--accent-color);"></i>
+                    <h1 class="text-xl font-semibold">Mortgage Rate Tracker</h1>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button id="professionalTheme" class="theme-selector px-3 py-1 rounded-md text-sm flex items-center space-x-1">
+                        <i class="fas fa-briefcase text-sm"></i>
+                        <span>Professional</span>
+                    </button>
+                    <button id="zenTheme" class="theme-selector px-3 py-1 rounded-md text-sm flex items-center space-x-1">
+                        <i class="fas fa-spa text-sm"></i>
+                        <span>Zen</span>
+                    </button>
+                    <button id="galacticTheme" class="theme-selector px-3 py-1 rounded-md text-sm flex items-center space-x-1">
+                        <i class="fas fa-star text-sm"></i>
+                        <span>Galactic</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Add Rates Form -->
+                    <div class="mb-10">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Add Today's Mortgage Rates</h2>
+                <span class="text-sm text-secondary-text">Enter rates to track changes over time</span>
+            </div>
+            
+            <div class="theme-card rounded-lg p-4 mb-4">
+                <p class="text-sm text-secondary-text italic">All rates based on: 760+ credit score, 25% down payment, single family home, and full documentation.</p>
+            </div>
+            
+            <!-- Tabs -->
+            <div class="flex border-b mb-4" style="border-color: var(--border-color);">
+                <button id="purchaseTab" class="tab active px-4 py-2 font-medium text-sm">Purchase Rates</button>
+                <button id="refinanceTab" class="tab px-4 py-2 font-medium text-sm">Refinance Rates</button>
+            </div>
+            
+            <!-- Purchase Rates Form -->
+            <div id="purchaseRatesForm" class="theme-card rounded-lg p-6">
+                <form id="purchaseForm" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="col-span-full">
+                        <label for="purchaseDate" class="block text-sm font-medium mb-1">Date</label>
+                        <input type="date" id="purchaseDate" name="date" required class="w-full px-3 py-2 rounded-md theme-input">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="conventional30" class="block text-sm font-medium mb-1">30-Year Fixed Conventional</label>
+                        <div class="flex space-x-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="conventional30" name="conventional30" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="conventional30APR" name="conventional30APR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="conventionalHighBalance30" class="block text-sm font-medium mb-1">30-Year Fixed High Balance</label>
+                        <div class="flex space-x-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="conventionalHighBalance30" name="conventionalHighBalance30" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="conventionalHighBalance30APR" name="conventionalHighBalance30APR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="jumbo30" class="block text-sm font-medium mb-1">30-Year Fixed Jumbo</label>
+                        <div class="flex space-x-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="jumbo30" name="jumbo30" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="jumbo30APR" name="jumbo30APR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="arm7" class="block text-sm font-medium mb-1">7/1 ARM</label>
+                        <div class="flex space-x-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="arm7" name="arm7" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="arm7APR" name="arm7APR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fhaVa30" class="block text-sm font-medium mb-1">30-Year Fixed FHA/VA</label>
+                        <div class="flex space-x-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="fhaVa30" name="fhaVa30" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="fhaVa30APR" name="fhaVa30APR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="bankStatements30" class="block text-sm font-medium mb-1">30-Year Fixed Bank Statements</label>
+                        <div class="flex space-x-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="bankStatements30" name="bankStatements30" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                <input type="number" step="0.001" id="bankStatements30APR" name="bankStatements30APR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-span-full">
+                        <button type="submit" class="px-4 py-2 rounded-md theme-button text-sm font-medium">
+                            Save Purchase Rates
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Refinance Rates Form -->
+            <div id="refinanceRatesForm" class="theme-card rounded-lg p-6 hidden">
+                <form id="refinanceForm" class="space-y-6">
+                    <div>
+                        <label for="refinanceDate" class="block text-sm font-medium mb-1">Date</label>
+                        <input type="date" id="refinanceDate" name="date" required class="w-full px-3 py-2 rounded-md theme-input">
+                    </div>
+                    
+                    <!-- 30-Year Fixed Conventional Refinance -->
+                    <div class="border-t pt-4" style="border-color: var(--border-color);">
+                        <h3 class="text-sm font-medium mb-3">30-Year Fixed Conventional</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 0 Points Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">0 Points</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventional30Refi0pt" name="conventional30Refi0pt" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventional30Refi0ptAPR" name="conventional30Refi0ptAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Closing Cost Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">No Closing Cost</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventional30RefiNCC" name="conventional30RefiNCC" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventional30RefiNCCAPR" name="conventional30RefiNCCAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 30-Year Fixed High Balance Refinance -->
+                    <div class="border-t pt-4" style="border-color: var(--border-color);">
+                        <h3 class="text-sm font-medium mb-3">30-Year Fixed High Balance</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 0 Points Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">0 Points</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventionalHighBalance30Refi0pt" name="conventionalHighBalance30Refi0pt" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventionalHighBalance30Refi0ptAPR" name="conventionalHighBalance30Refi0ptAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Closing Cost Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">No Closing Cost</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventionalHighBalance30RefiNCC" name="conventionalHighBalance30RefiNCC" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="conventionalHighBalance30RefiNCCAPR" name="conventionalHighBalance30RefiNCCAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 30-Year Fixed Jumbo Refinance -->
+                    <div class="border-t pt-4" style="border-color: var(--border-color);">
+                        <h3 class="text-sm font-medium mb-3">30-Year Fixed Jumbo</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 0 Points Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">0 Points</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="jumbo30Refi0pt" name="jumbo30Refi0pt" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="jumbo30Refi0ptAPR" name="jumbo30Refi0ptAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Closing Cost Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">No Closing Cost</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="jumbo30RefiNCC" name="jumbo30RefiNCC" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="jumbo30RefiNCCAPR" name="jumbo30RefiNCCAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 7/1 ARM Refinance -->
+                    <div class="border-t pt-4" style="border-color: var(--border-color);">
+                        <h3 class="text-sm font-medium mb-3">7/1 ARM</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 0 Points Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">0 Points</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="arm7Refi0pt" name="arm7Refi0pt" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="arm7Refi0ptAPR" name="arm7Refi0ptAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Closing Cost Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">No Closing Cost</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="arm7RefiNCC" name="arm7RefiNCC" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="arm7RefiNCCAPR" name="arm7RefiNCCAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 30-Year Fixed FHA/VA Refinance -->
+                    <div class="border-t pt-4" style="border-color: var(--border-color);">
+                        <h3 class="text-sm font-medium mb-3">30-Year Fixed FHA/VA</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 0 Points Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">0 Points</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="fhaVa30Refi0pt" name="fhaVa30Refi0pt" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="fhaVa30Refi0ptAPR" name="fhaVa30Refi0ptAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Closing Cost Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">No Closing Cost</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="fhaVa30RefiNCC" name="fhaVa30RefiNCC" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="fhaVa30RefiNCCAPR" name="fhaVa30RefiNCCAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 30-Year Fixed Bank Statements Refinance -->
+                    <div class="border-t pt-4" style="border-color: var(--border-color);">
+                        <h3 class="text-sm font-medium mb-3">30-Year Fixed Bank Statements</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- 0 Points Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">0 Points</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="bankStatements30Refi0pt" name="bankStatements30Refi0pt" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="bankStatements30Refi0ptAPR" name="bankStatements30Refi0ptAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- No Closing Cost Option -->
+                            <div>
+                                <div class="flex items-center mb-2">
+                                    <span class="text-xs font-medium">No Closing Cost</span>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="bankStatements30RefiNCC" name="bankStatements30RefiNCC" placeholder="Rate" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                    <div class="relative flex-1">
+                                        <span class="absolute inset-y-0 right-3 flex items-center text-sm text-secondary-text">%</span>
+                                        <input type="number" step="0.001" id="bankStatements30RefiNCCAPR" name="bankStatements30RefiNCCAPR" placeholder="APR" class="w-full px-3 py-2 rounded-md theme-input">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="px-4 py-2 rounded-md theme-button text-sm font-medium">
+                            Save Refinance Rates
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Rate Trends -->
+        <div class="mb-10">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Rate Trends</h2>
+                <div class="flex items-center space-x-2">
+                    <select id="rateTypeFilter" class="px-2 py-1 rounded-md text-sm theme-input">
+                        <option value="purchase">Purchase Rates</option>
+                        <option value="refinance-0pt">Refinance (0 Points)</option>
+                        <option value="refinance-ncc">Refinance (No Closing Cost)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="theme-card rounded-lg p-4 mb-4">
+                <p class="text-sm text-secondary-text italic">All rates based on: 760+ credit score, 25% down payment, single family home, and full documentation.</p>
+            </div>
+            
+            <div class="theme-card rounded-lg p-6">
+                <div style="height: 300px;">
+                    <canvas id="ratesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Rate History -->
+        <div>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold">Rate History</h2>
+                <div class="flex items-center space-x-2">
+                    <select id="historyRateTypeFilter" class="px-2 py-1 rounded-md text-sm theme-input">
+                        <option value="purchase">Purchase Rates</option>
+                        <option value="refinance-0pt">Refinance (0 Points)</option>
+                        <option value="refinance-ncc">Refinance (No Closing Cost)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="theme-card rounded-lg p-4 mb-4">
+                <p class="text-sm text-secondary-text italic">All rates based on: 760+ credit score, 25% down payment, single family home, and full documentation.</p>
+            </div>
+            
+            <!-- Purchase Rates History Table -->
+            <div id="purchaseRatesHistory" class="theme-card rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table id="purchaseRatesTable" class="w-full theme-table">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm">Date</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Conv</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year High Balance</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Jumbo</th>
+                                <th class="py-3 px-4 text-left text-sm">7/1 ARM</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year FHA/VA</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Bank Stmts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="purchaseHistoryBody">
+                            <!-- Rates will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noPurchaseDataMessage" class="text-center py-8">
+                    <p class="text-secondary-text">No purchase rate data available yet. Add your first entry using the form above.</p>
+                </div>
+            </div>
+            
+            <!-- Refinance Rates History Tables -->
+            <div id="refinance0ptRatesHistory" class="theme-card rounded-lg overflow-hidden hidden">
+                <div class="overflow-x-auto">
+                    <table id="refinance0ptRatesTable" class="w-full theme-table">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm">Date</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Conv (0 pts)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year High Balance (0 pts)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Jumbo (0 pts)</th>
+                                <th class="py-3 px-4 text-left text-sm">7/1 ARM (0 pts)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year FHA/VA (0 pts)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Bank Stmts (0 pts)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="refinance0ptHistoryBody">
+                            <!-- Rates will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noRefinance0ptDataMessage" class="text-center py-8">
+                    <p class="text-secondary-text">No refinance rate data available yet. Add your first entry using the form above.</p>
+                </div>
+            </div>
+            
+            <div id="refinanceNCCRatesHistory" class="theme-card rounded-lg overflow-hidden hidden">
+                <div class="overflow-x-auto">
+                    <table id="refinanceNCCRatesTable" class="w-full theme-table">
+                        <thead>
+                            <tr>
+                                <th class="py-3 px-4 text-left text-sm">Date</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Conv (NCC)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year High Balance (NCC)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Jumbo (NCC)</th>
+                                <th class="py-3 px-4 text-left text-sm">7/1 ARM (NCC)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year FHA/VA (NCC)</th>
+                                <th class="py-3 px-4 text-left text-sm">30-Year Bank Stmts (NCC)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="refinanceNCCHistoryBody">
+                            <!-- Rates will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="noRefinanceNCCDataMessage" class="text-center py-8">
+                    <p class="text-secondary-text">No refinance rate data available yet. Add your first entry using the form above.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Storage keys
+        const PURCHASE_RATES_STORAGE_KEY = 'mortgagePurchaseRates';
+        const REFINANCE_RATES_STORAGE_KEY = 'mortgageRefinanceRates';
+        const THEME_STORAGE_KEY = 'mortgageRatesTheme';
+        
+        // DOM Elements
+        const purchaseForm = document.getElementById('purchaseForm');
+        const refinanceForm = document.getElementById('refinanceForm');
+        const purchaseTab = document.getElementById('purchaseTab');
+        const refinanceTab = document.getElementById('refinanceTab');
+        const purchaseRatesForm = document.getElementById('purchaseRatesForm');
+        const refinanceRatesForm = document.getElementById('refinanceRatesForm');
+        const purchaseHistoryBody = document.getElementById('purchaseHistoryBody');
+        const refinance0ptHistoryBody = document.getElementById('refinance0ptHistoryBody');
+        const refinanceNCCHistoryBody = document.getElementById('refinanceNCCHistoryBody');
+        const noPurchaseDataMessage = document.getElementById('noPurchaseDataMessage');
+        const noRefinance0ptDataMessage = document.getElementById('noRefinance0ptDataMessage');
+        const noRefinanceNCCDataMessage = document.getElementById('noRefinanceNCCDataMessage');
+        const ratesChart = document.getElementById('ratesChart');
+        const rateTypeFilter = document.getElementById('rateTypeFilter');
+        const historyRateTypeFilter = document.getElementById('historyRateTypeFilter');
+        const purchaseRatesHistory = document.getElementById('purchaseRatesHistory');
+        const refinance0ptRatesHistory = document.getElementById('refinance0ptRatesHistory');
+        const refinanceNCCRatesHistory = document.getElementById('refinanceNCCRatesHistory');
+        
+        // Theme elements
+        const professionalThemeBtn = document.getElementById('professionalTheme');
+        const zenThemeBtn = document.getElementById('zenTheme');
+        const galacticThemeBtn = document.getElementById('galacticTheme');
+        
+        // Tab functionality
+        purchaseTab.addEventListener('click', function() {
+            purchaseTab.classList.add('active');
+            refinanceTab.classList.remove('active');
+            purchaseRatesForm.classList.remove('hidden');
+            refinanceRatesForm.classList.add('hidden');
+        });
+        
+        refinanceTab.addEventListener('click', function() {
+            refinanceTab.classList.add('active');
+            purchaseTab.classList.remove('active');
+            refinanceRatesForm.classList.remove('hidden');
+            purchaseRatesForm.classList.add('hidden');
+        });
+        
+        // History type filter
+        historyRateTypeFilter.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // Hide all tables
+            purchaseRatesHistory.classList.add('hidden');
+            refinance0ptRatesHistory.classList.add('hidden');
+            refinanceNCCRatesHistory.classList.add('hidden');
+            
+            // Show selected table
+            if (selectedType === 'purchase') {
+                purchaseRatesHistory.classList.remove('hidden');
+            } else if (selectedType === 'refinance-0pt') {
+                refinance0ptRatesHistory.classList.remove('hidden');
+            } else if (selectedType === 'refinance-ncc') {
+                refinanceNCCRatesHistory.classList.remove('hidden');
+            }
+        });
+        
+        // Apply theme
+        function applyTheme(themeName) {
+            document.body.classList.remove('theme-zen', 'theme-galactic');
+            
+            professionalThemeBtn.classList.remove('active');
+            zenThemeBtn.classList.remove('active');
+            galacticThemeBtn.classList.remove('active');
+            
+            if (themeName !== 'professional') {
+                document.body.classList.add(`theme-${themeName}`);
+            }
+            
+            if (themeName === 'professional') {
+                professionalThemeBtn.classList.add('active');
+            } else if (themeName === 'zen') {
+                zenThemeBtn.classList.add('active');
+            } else if (themeName === 'galactic') {
+                galacticThemeBtn.classList.add('active');
+            }
+            
+            localStorage.setItem(THEME_STORAGE_KEY, themeName);
+            
+            // Update chart if it exists
+            updateChart();
+        }
+        
+        // Theme button event listeners
+        professionalThemeBtn.addEventListener('click', () => applyTheme('professional'));
+        zenThemeBtn.addEventListener('click', () => applyTheme('zen'));
+        galacticThemeBtn.addEventListener('click', () => applyTheme('galactic'));
+        
+        // Format date for display
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+        
+        // Simple chart initialization
+        function updateChart() {
+            const ctx = ratesChart.getContext('2d');
+            
+            // Check if we already have a chart and destroy it
+            if (window.ratesChartInstance) {
+                window.ratesChartInstance.destroy();
+            }
+            
+            // Create a new chart with minimal data
+            window.ratesChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Add rate data to see chart'],
+                    datasets: [{
+                        label: 'No data yet',
+                        data: [0],
+                        borderColor: '#0ea5e9',
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Form submission handlers
+        purchaseForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const rateData = Object.fromEntries(formData);
+            
+            // Save to localStorage
+            let savedRates = JSON.parse(localStorage.getItem(PURCHASE_RATES_STORAGE_KEY) || '[]');
+            savedRates.push(rateData);
+            localStorage.setItem(PURCHASE_RATES_STORAGE_KEY, JSON.stringify(savedRates));
+            
+            // Add to table
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td class="py-2 px-4 border-b text-sm">${formatDate(rateData.date)}</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.conventional30}% / ${rateData.conventional30APR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.conventionalHighBalance30}% / ${rateData.conventionalHighBalance30APR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.jumbo30}% / ${rateData.jumbo30APR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.arm7}% / ${rateData.arm7APR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.fhaVa30}% / ${rateData.fhaVa30APR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.bankStatements30}% / ${rateData.bankStatements30APR}%</td>
+            `;
+            purchaseHistoryBody.prepend(row);
+            
+            // Hide the "no data" message
+            noPurchaseDataMessage.classList.add('hidden');
+            
+            // Reset the form
+            this.reset();
+            
+            // Show a success message
+            alert('Purchase rates saved successfully!');
+        });
+        
+        refinanceForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const rateData = Object.fromEntries(formData);
+            
+            // Save to localStorage
+            let savedRates = JSON.parse(localStorage.getItem(REFINANCE_RATES_STORAGE_KEY) || '[]');
+            savedRates.push(rateData);
+            localStorage.setItem(REFINANCE_RATES_STORAGE_KEY, JSON.stringify(savedRates));
+            
+            // Add to 0 Points table
+            const row0pt = document.createElement('tr');
+            row0pt.innerHTML = `
+                <td class="py-2 px-4 border-b text-sm">${formatDate(rateData.date)}</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.conventional30Refi0pt}% / ${rateData.conventional30Refi0ptAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.conventionalHighBalance30Refi0pt}% / ${rateData.conventionalHighBalance30Refi0ptAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.jumbo30Refi0pt}% / ${rateData.jumbo30Refi0ptAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.arm7Refi0pt}% / ${rateData.arm7Refi0ptAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.fhaVa30Refi0pt}% / ${rateData.fhaVa30Refi0ptAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.bankStatements30Refi0pt}% / ${rateData.bankStatements30Refi0ptAPR}%</td>
+            `;
+            
+            // Add to No Closing Cost table
+            const rowNCC = document.createElement('tr');
+            rowNCC.innerHTML = `
+                <td class="py-2 px-4 border-b text-sm">${formatDate(rateData.date)}</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.conventional30RefiNCC}% / ${rateData.conventional30RefiNCCAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.conventionalHighBalance30RefiNCC}% / ${rateData.conventionalHighBalance30RefiNCCAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.jumbo30RefiNCC}% / ${rateData.jumbo30RefiNCCAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.arm7RefiNCC}% / ${rateData.arm7RefiNCCAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.fhaVa30RefiNCC}% / ${rateData.fhaVa30RefiNCCAPR}%</td>
+                <td class="py-2 px-4 border-b text-sm">${rateData.bankStatements30RefiNCC}% / ${rateData.bankStatements30RefiNCCAPR}%</td>
+            `;
+            refinance0ptHistoryBody.prepend(row0pt);
+            refinanceNCCHistoryBody.prepend(rowNCC);
+            
+            // Hide the "no data" messages
+            noRefinance0ptDataMessage.classList.add('hidden');
+            noRefinanceNCCDataMessage.classList.add('hidden');
+            
+            // Reset the form
+            this.reset();
+            
+            // Show a success message
+            alert('Refinance rates saved successfully!');
+        });
+        
+        // Initialize on page load
+        function initialize() {
+            // Load saved theme
+            const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'professional';
+            applyTheme(savedTheme);
+            
+            // Load saved purchase rates
+            const savedPurchaseRates = JSON.parse(localStorage.getItem(PURCHASE_RATES_STORAGE_KEY) || '[]');
+            if (savedPurchaseRates.length > 0) {
+                noPurchaseDataMessage.classList.add('hidden');
+                savedPurchaseRates.forEach(rate => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="py-2 px-4 border-b text-sm">${formatDate(rate.date)}</td>
+                        <td class="py-2 px-4 border-b text-sm">${rate.conventional30}% / ${rate.conventional30APR}%</td>
+                        <td class="py-2 px-4 border-b text-sm">${rate.conventionalHighBalance30}% / ${rate.conventionalHighBalance30APR}%</td>
+                        <td class="py-2 px-4 border-b text-sm">${rate.jumbo30}% / ${rate.jumbo30APR}%</td>
+                        <td class="py-2 px-4 border-b text-sm">${rate.arm7}% / ${rate.arm7APR}%</td>
+                        <td class="py-2 px-4 border-b text-sm">${rate.fhaVa30}% / ${rate.fhaVa30APR}%</td>
+                        <td class="py-2 px-4 border-b text-sm">${rate.bankStatements30}% / ${rate.bankStatements30APR}%</td>
+                    `;
+                    purchaseHistoryBody.prepend(row);
+                });
+            }
+            
+            // Initialize chart
+            updateChart();
+        }
+        
+        // Run initialization
+        initialize();
+    </script>
+</body>
+</html>
